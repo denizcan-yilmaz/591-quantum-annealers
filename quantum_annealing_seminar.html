@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Compensating Connectivity Restrictions in Quantum Annealers, Seminar Slides</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+<style>
+  :root {
+    --bg: #e8e6df;
+    --card: #fbfaf6;
+    --fg: #1a1a1a;
+    --muted: #5b5b5b;
+    --accent: #7a1f1f;
+    --rule: #c9c4b6;
+    --soft: #efece2;
+    --w: 1200px;
+    --h: 675px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg);
+    font-family: "EB Garamond", "Garamond", Georgia, "Times New Roman", serif;
+    font-size: 16px; line-height: 1.4;
+    overflow: hidden;
+  }
+  .stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  .slide {
+    width: var(--w); height: var(--h);
+    background: var(--card);
+    box-shadow: 0 6px 28px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.05);
+    border-radius: 4px;
+    padding: 38px 54px 48px 54px;
+    position: absolute;
+    overflow: hidden;
+    display: none;
+    flex-direction: column;
+    transform-origin: center center;
+  }
+  .slide.active { display: flex; }
+  .slide h1 {
+    font-size: 26px; line-height: 1.2; margin: 0 0 14px 0;
+    padding-bottom: 8px; border-bottom: 1px solid var(--rule);
+    color: var(--accent); font-weight: 600; letter-spacing: 0.2px;
+  }
+  .slide h2 { display: none; }
+  .slide h3 {
+    font-size: 16.5px; margin: 12px 0 4px 0; color: var(--accent); font-weight: 600;
+  }
+  .slide p, .slide li { font-size: 16px; margin: 4px 0; }
+  .slide ul, .slide ol { margin: 4px 0 6px 22px; padding: 0; }
+  .slide li { margin: 3px 0; }
+  .slide .small { font-size: 13.5px; color: var(--muted); }
+
+  /* Vertically center body content for sparse slides */
+  .body-center { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+
+  .footer {
+    position: absolute; bottom: 12px; left: 54px; right: 54px;
+    display: flex; justify-content: space-between;
+    color: var(--muted); font-size: 11.5px; border-top: 1px solid var(--rule); padding-top: 5px;
+  }
+  .pageno { font-variant-numeric: tabular-nums; }
+
+  .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .twocol-narrow-wide { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 22px; }
+  .twocol-wide-narrow { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 22px; }
+  .threecol { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+
+  .box { background: var(--soft); border-left: 3px solid var(--accent); padding: 8px 12px; margin: 6px 0; }
+  .keypt { background: #fff5e6; border-left: 3px solid #b07a1d; padding: 8px 12px; margin: 6px 0; font-size: 14.5px; }
+  .eq { text-align: center; margin: 6px 0; }
+  .eq + p { margin-top: 4px; }
+
+  table { border-collapse: collapse; margin: 4px 0; font-size: 13.5px; width: 100%; }
+  th, td { border: 1px solid var(--rule); padding: 4px 7px; text-align: left; vertical-align: top; }
+  th { background: var(--soft); font-weight: 600; }
+
+  /* Figures */
+  figure { margin: 0; text-align: center; display: flex; flex-direction: column; align-items: center; }
+  figure img { display: block; max-width: 100%; height: auto;
+    border: 1px solid var(--rule); border-radius: 2px; background: white; padding: 4px; }
+  figcaption { font-size: 11.5px; color: var(--muted); margin-top: 4px; font-style: italic; line-height: 1.3; max-width: 95%; }
+
+  /* Title slide */
+  .title-slide { justify-content: center; align-items: center; text-align: center; padding: 70px; }
+  .title-slide .papertitle {
+    font-size: 32px; font-weight: 600; color: var(--accent);
+    line-height: 1.25; margin-bottom: 14px;
+  }
+  .title-slide .authors { font-size: 17px; color: var(--muted); margin-bottom: 24px; font-style: italic; }
+  .title-slide .arxiv { font-size: 15px; color: var(--muted); margin-bottom: 50px; }
+  .title-slide .seminar {
+    font-size: 15px; color: var(--fg); border-top: 1px solid var(--rule);
+    padding-top: 16px; width: 60%; margin: 0 auto;
+  }
+  .title-slide .student { font-size: 18px; margin-top: 6px; }
+
+  .outline-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 22px; margin-top: 6px; }
+  .outline-item { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; border-bottom: 1px dotted var(--rule); }
+  .outline-num { color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums; min-width: 22px; font-size: 16px; }
+  .outline-title { font-weight: 600; font-size: 15px; }
+  .outline-desc { color: var(--muted); font-size: 13px; line-height: 1.35; }
+
+  .nav-hint {
+    position: fixed; bottom: 6px; left: 50%; transform: translateX(-50%);
+    color: #888; font-size: 11px; opacity: 0.55; z-index: 10;
+  }
+
+  .stat-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-top: 18px; }
+  .stat-row .box { text-align: center; padding: 12px; }
+  .stat-row strong { font-size: 24px; display: block; color: var(--accent); margin-bottom: 4px; }
+
+  /* Print */
+  @media print {
+    @page { size: 1200px 675px; margin: 0; }
+    html, body { overflow: visible; background: white; }
+    .stage { position: relative; display: block; }
+    .slide { display: flex !important; position: relative; transform: none !important; box-shadow: none; page-break-after: always; margin: 0 auto; }
+    .nav-hint { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+
+<!-- ============ SLIDE 1: TITLE ============ -->
+<section class="slide title-slide active">
+  <div class="papertitle">
+    Compensating Connectivity Restrictions<br>
+    in Quantum Annealers via Splitting<br>
+    and Linearisation Techniques
+  </div>
+  <div class="authors">
+    Seelbach Benkner &middot; Lähner &middot; Golyanik &middot; Kliesch &middot; Moeller
+  </div>
+  <div class="arxiv">arXiv:2507.12536v1 &nbsp;·&nbsp; July 2025</div>
+  <div class="seminar">
+    CENG 591 Graduate Seminar
+    <div class="student">Denizcan Yılmaz &nbsp;·&nbsp; 2444172</div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 2: OUTLINE ============ -->
+<section class="slide">
+  <h1>Outline</h1>
+  <h2>Thirteen minutes, twelve content slides</h2>
+  <div class="body-center">
+    <div class="outline-grid">
+      <div class="outline-item"><span class="outline-num">1</span><div><div class="outline-title">The Problem</div><div class="outline-desc">Why quantum annealers have a connectivity restriction.</div></div></div>
+      <div class="outline-item"><span class="outline-num">2</span><div><div class="outline-title">Background</div><div class="outline-desc">QUBO and the Ising formulation.</div></div></div>
+      <div class="outline-item"><span class="outline-num">3</span><div><div class="outline-title">The Standard Fix</div><div class="outline-desc">Minor embedding and why it does not scale.</div></div></div>
+      <div class="outline-item"><span class="outline-num">4</span><div><div class="outline-title">Splitting Idea</div><div class="outline-desc">Decompose $A$ into hardware-friendly and remainder parts.</div></div></div>
+      <div class="outline-item"><span class="outline-num">5</span><div><div class="outline-title">Mathematics</div><div class="outline-desc">Linearisation, damping, iteration, random permutation.</div></div></div>
+      <div class="outline-item"><span class="outline-num">6</span><div><div class="outline-title">Theoretical Guarantee</div><div class="outline-desc">The weak monotonicity proof.</div></div></div>
+      <div class="outline-item"><span class="outline-num">7</span><div><div class="outline-title">Experiments</div><div class="outline-desc">Spin glass, MQLib, and D-Wave Advantage.</div></div></div>
+      <div class="outline-item"><span class="outline-num">8</span><div><div class="outline-title">Limitations &amp; Conclusions</div><div class="outline-desc">Open questions and the bottom line.</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 3: PROBLEM ============ -->
+<section class="slide">
+  <h1>Why This Paper Matters</h1>
+  <h2>Combinatorial optimisation, quantum annealers, and a hard physical limit</h2>
+
+  <div class="body-center">
+    <h3>The promise</h3>
+    <ul>
+      <li><strong>Combinatorial optimisation</strong> (scheduling, routing, circuit design, protein folding) is NP-hard in general.</li>
+      <li><strong>Quantum annealers</strong> (D-Wave) encode such problems as interacting spins; the lowest-energy spin configuration is the optimum.</li>
+    </ul>
+
+    <h3>The catch</h3>
+    <ul>
+      <li>Each qubit can only interact with a small fixed set of physical neighbours.</li>
+      <li>If the problem needs a coupling that the hardware does not wire, it cannot be encoded directly. This is the <strong>connectivity restriction</strong>.</li>
+    </ul>
+
+    <div class="stat-row">
+      <div class="box"><strong>5,000+</strong><span class="small">Physical qubits on D-Wave Advantage</span></div>
+      <div class="box"><strong>≈ 150</strong><span class="small">Usable variables for a dense QUBO</span></div>
+      <div class="box"><strong>NP-hard</strong><span class="small">The standard workaround itself</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 4: QUBO / ISING ============ -->
+<section class="slide">
+  <h1>Problem Formulation</h1>
+  <h2>QUBO and the equivalent Ising model</h2>
+
+  <div class="body-center">
+    <div class="twocol">
+      <div>
+        <h3>QUBO (binary)</h3>
+        <div class="eq">$$\hat{x} \;=\; \arg\min_{x \in \{0,1\}^n} \; x^{\top} Q \, x$$</div>
+        <p>$x$ is a length-$n$ binary vector. $Q_{ij}$ encodes the pairwise interaction between variables $i$ and $j$.</p>
+      </div>
+      <div>
+        <h3>Ising (spins)</h3>
+        <div class="eq">$$\hat{s} \;=\; \arg\min_{s \in \{-1,+1\}^n} \; s^{\top} A\, s + s^{\top} b$$</div>
+        <p>Spins in $\{-1,+1\}$ match physical qubit states. Conversion: $s = 2x - 1$, with $A = Q/4$ and $b = Q\mathbf{1}/2$.</p>
+      </div>
+    </div>
+
+    <div class="keypt" style="margin-top: 14px;"><strong>Key hardware constraint.</strong> A non-zero entry $A_{ij}$ requires a physical coupling wire between qubits $i$ and $j$. The root of the connectivity problem.</div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 5: MINOR EMBEDDING ============ -->
+<section class="slide">
+  <h1>The Standard Fix: Minor Embedding</h1>
+  <h2>What it is, and why it does not scale</h2>
+
+  <h3>What it is</h3>
+  <p>Bundle several physical qubits into a <em>chain</em> that acts as one logical qubit. A chain-strength penalty in the Hamiltonian forces all qubits in a chain to agree, creating virtual long-range couplings.</p>
+
+  <h3>Why it is painful</h3>
+  <ul>
+    <li>Finding the embedding is itself <strong>NP-hard</strong>, no efficient general algorithm.</li>
+    <li>Recomputed per instance, <strong>up to ten minutes</strong> of preprocessing.</li>
+    <li>Chains consume qubits: 5,000 physical $\rightarrow$ $\approx$ 150 logical for dense problems.</li>
+    <li>Long chains compete with the problem signal, reducing effective precision.</li>
+  </ul>
+
+  <h3>Method comparison</h3>
+  <table>
+    <tr><th>Feature</th><th>Minor Embedding</th><th>Splitting (this paper)</th></tr>
+    <tr><td>Large problems</td><td>No ($\le 150$ vars dense)</td><td>Yes, any size</td></tr>
+    <tr><td>Preprocessing</td><td>NP-hard, minutes per instance</td><td>None</td></tr>
+    <tr><td>Extra qubits</td><td>Many (chains)</td><td>None</td></tr>
+    <tr><td>Guarantees</td><td>None</td><td>Weakly monotone energy</td></tr>
+  </table>
+</section>
+
+<!-- ============ SLIDE 6: SPLITTING + FIG 1 ============ -->
+<section class="slide">
+  <h1>The Core Idea: Splitting the Coupling Matrix</h1>
+  <h2>Hardware-friendly part exact, remainder linearised</h2>
+
+  <figure style="margin: 6px 0 4px 0;">
+    <img src="figs/fig1_clean-11.png" alt="Fig. 1 decomposition diagram from paper" style="max-height: 235px;">
+    <figcaption><strong>Fig. 1 (paper).</strong> Top: the problem graph decomposes into hardware edges + a remainder. Bottom: a random permutation reshuffles which edges land on hardware in the next iteration.</figcaption>
+  </figure>
+
+  <div class="eq" style="margin-top: 10px;">$$A \;=\; A_{Q} \;+\; A_{L}, \qquad E(s) \;=\; s^{\top}A_{Q}s \;+\; s^{\top}A_{L}s$$</div>
+
+  <div class="twocol" style="margin-top: 4px;">
+    <div><strong>$A_{Q}$, quadratic part.</strong> Edges already on the hardware ($M_{ij}=1$). Handled <em>exactly</em> by the annealer.</div>
+    <div><strong>$A_{L}$, linearised part.</strong> Remaining edges. Approximated as a per-qubit bias (next slide).</div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 7: LINEARISATION + DAMPING ============ -->
+<section class="slide">
+  <h1>Linearisation and Damping</h1>
+  <h2>Turning the leftover quadratic part into per-qubit biases</h2>
+
+  <div class="body-center">
+    <h3>Step 1. Taylor linearisation of $A_L$</h3>
+    <div class="eq">$$s^{\top} A_{L}\, s \;\approx\; (s^{(k)})^{\top} A_{L}\, s^{(k)} \;+\; \big(2 A_{L}\, s^{(k)}\big)^{\top} s \;+\; \text{const}$$</div>
+    <p>The right-hand side is <strong>linear</strong> in $s$: just a fixed bias per qubit. No new coupling wires needed.</p>
+
+    <h3>Step 2. Damping term</h3>
+    <div class="eq">$$\frac{\lambda}{2}\, \big\| s - s^{(k)} \big\|^{2}$$</div>
+    <p>Penalises jumps where the Taylor approximation would break down. On $\{-1,+1\}^{n}$, the squared norm is constant, so this also reduces to a per-qubit bias.</p>
+
+    <div class="keypt"><strong>Weak monotonicity</strong> is proven whenever $\lambda \;\ge\; \|2 A_{L}\|$ (spectral norm).</div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 8: ITERATION STEP ============ -->
+<section class="slide">
+  <h1>The Full Iteration Step</h1>
+  <h2>One hardware-compatible subproblem per iteration</h2>
+
+  <div class="body-center">
+    <div class="eq" style="margin: 14px 0;">$$s^{(k+1)} \;=\; \arg\min_{s\in\{-1,+1\}^n} \; \underbrace{s^{\top} A_{Q}\, s}_{\text{exact}} \;+\; \underbrace{\big(2 A_{L}\, s^{(k)}\big)^{\top} s}_{\text{linearised bias}} \;-\; \underbrace{\lambda\, (s^{(k)})^{\top} s}_{\text{damping bias}}$$</div>
+
+    <div class="threecol">
+      <div class="box"><strong>Term 1.</strong> Exact quadratic part. Handled natively by the annealer's coupling wires after the random permutation.</div>
+      <div class="box"><strong>Term 2.</strong> Linearised contribution of $A_L$. The vector $2 A_L s^{(k)}$ is fixed from the previous iterate, so this is a per-qubit bias.</div>
+      <div class="box"><strong>Term 3.</strong> Damping bias, also linear in $s$. Pulls the new iterate toward $s^{(k)}$. Larger $\lambda$ = more conservative step.</div>
+    </div>
+
+    <p class="small" style="margin-top: 12px;"><strong>Connection.</strong> Mathematically equivalent to <em>proximal gradient descent</em> on $\min f(s) + g(s)$ with $f(s) = s^{\top} A_L s$ and $g(s) = s^{\top} A_Q s + \mathbb{I}_{\{-1,+1\}^n}$. The main empirical competitor, LNLS, is the degenerate case where most variables are fixed.</p>
+  </div>
+</section>
+
+<!-- ============ SLIDE 9: RANDOM PERMUTATION + ALGORITHM ============ -->
+<section class="slide">
+  <h1>Random Permutation &amp; Algorithm</h1>
+  <h2>Spreading approximation error; choosing $\lambda$ efficiently</h2>
+
+  <div class="body-center">
+  <div class="twocol">
+    <div>
+      <h3>Why permute</h3>
+      <p>A fixed split always linearises the same edges. A random permutation $P_k$ each iteration reshuffles which edges land on hardware:</p>
+      <div class="eq">$$A^{(k)}_{Q} = (P_k^{\top} M P_k)\, \odot\, A.$$</div>
+      <p>Every edge of $A$ gets the exact treatment some of the time; error spreads evenly.</p>
+
+      <h3>Choosing $\lambda$</h3>
+      <p>A variable only flips when its entry in the linear force vector changes sign. Only the midpoints between sorted $|L|$ entries give distinct iterates. <strong>Default: 15 candidates per iteration</strong>; keep the lowest-energy result.</p>
+    </div>
+    <div>
+      <h3>Algorithm</h3>
+      <ol>
+        <li>Initialise: random $s \in \{-1,+1\}^n$.</li>
+        <li>Draw permutation $P_k$.</li>
+        <li>Split $A$ into $A^{(k)}_Q$ and $A^{(k)}_L$.</li>
+        <li>Compute the bias from $A^{(k)}_L$ and $s^{(k)}$.</li>
+        <li>Sub-iterations over $\lambda$ candidates; keep best.</li>
+        <li>Update $s$; repeat from step&nbsp;2.</li>
+      </ol>
+      <div class="keypt" style="margin-top: 10px;">Two nested loops: outer over permutations, inner over $\lambda$ values. One hardware solve per inner step.</div>
+    </div>
+  </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 10: MONOTONICITY PROOF ============ -->
+<section class="slide">
+  <h1>Weak Monotonicity Proof</h1>
+  <h2>The energy never increases when $\lambda$ is large enough</h2>
+
+  <div class="body-center">
+    <p><strong>Theorem.</strong> If $\lambda \ge \|2 A_{L}\|$, then $E(s^{(k+1)}) \le E(s^{(k)})$ for every $k$.</p>
+
+    <h3>Step 1. Surrogate overestimates the true energy</h3>
+    <div class="eq">$$E^{(k)}(x) \;\ge\; E(x) \qquad \text{for all } x \in \{-1,+1\}^{n}.$$</div>
+    <p class="small">Taylor remainder theorem: for $\lambda$ large enough, the linearisation+damping surrogate is a safe upper bound.</p>
+
+    <h3>Step 2. Algorithm minimises the surrogate</h3>
+    <div class="eq">$$E^{(k)}(s^{(k+1)}) \;\le\; E^{(k)}(s^{(k)}).$$</div>
+
+    <h3>Step 3. Chain the inequalities</h3>
+    <div class="eq">$$E(s^{(k+1)}) \;\le\; E^{(k)}(s^{(k+1)}) \;\le\; E^{(k)}(s^{(k)}) \;=\; E(s^{(k)}). \qquad \blacksquare$$</div>
+
+    <div class="keypt"><strong>Convergence.</strong> Only $2^{n}$ binary vectors exist; non-increasing energy plus generic distinct values forces termination in finitely many steps.</div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 11: RESULTS (WITH FIGURES) ============ -->
+<section class="slide">
+  <h1>Experimental Results</h1>
+  <h2>Spin glass, MQLib Max-Cut, and D-Wave Advantage hardware</h2>
+
+  <div class="body-center">
+  <div class="twocol-wide-narrow">
+    <div>
+      <h3>Setup &amp; datasets</h3>
+      <ul>
+        <li>D-Wave Neal SA solver, restricted to Pegasus connectivity (controlled benchmark).</li>
+        <li>Real hardware: D-Wave Advantage v6.4, 20 µs anneal, chain strength $1.001\times$.</li>
+        <li><strong>Reg spin glass</strong>: 270 instances, sizes from 10 upward (some exceed 150).</li>
+        <li><strong>MQLib Max-Cut</strong>: 909 instances, 500–1000 variables.</li>
+      </ul>
+
+      <h3>Key findings</h3>
+      <ul>
+        <li>Small instances: embedding works, but its 10 min preprocessing dwarfs everything else (Fig. 6b, right).</li>
+        <li>Large instances: embedding fails; splitting matches LNLS $m\approx 30$.</li>
+        <li>Dense graphs favour splitting; sparse graphs favour specialised heuristics.</li>
+        <li>Damping ablation (922 instances): when damping wins, it wins by a larger margin (296 vs 164 decisive cases).</li>
+        <li>D-Wave hardware: works for $\pm 1$ weights; fails on float / wide-range integers (precision).</li>
+      </ul>
+    </div>
+
+    <div>
+      <figure style="margin-bottom: 8px;">
+        <img src="figs/fig6_clean-17.png" alt="Fig. 6 (a, b)" style="max-height: 130px;">
+        <figcaption><strong>Fig. 6.</strong> (a) approx. ratio vs iteration; (b) wall-clock time vs problem size. Black dots (minor embedding) sit two orders of magnitude above LNLS / splitting.</figcaption>
+      </figure>
+      <figure>
+        <img src="figs/fig10_clean-21.png" alt="Fig. 10" style="max-height: 220px;">
+        <figcaption><strong>Fig. 10.</strong> 13 MQLib instances with $\pm 1$ weights, on real D-Wave Advantage. Splitting (red) tracks LNLS curves.</figcaption>
+      </figure>
+    </div>
+  </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 12: LIMITATIONS + FUTURE WORK + CONCLUSIONS ============ -->
+<section class="slide">
+  <h1>Limitations, Future Work &amp; Conclusions</h1>
+  <h2>Where the method falls short, where it goes next, and the bottom line</h2>
+
+  <div class="body-center">
+  <div class="threecol">
+    <div>
+      <h3>Limitations</h3>
+      <ul>
+        <li>Converges to a <strong>local minimum</strong>, not the global one.</li>
+        <li>D-Wave precision limits floats and wide-range integer weights.</li>
+        <li>No reliable predictor of when splitting beats LNLS.</li>
+        <li>$\lambda$ selection is heuristic.</li>
+        <li>Tested only on Pegasus topology.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Future work</h3>
+      <ul>
+        <li>Validate the <strong>SA extension</strong> (Sec.&nbsp;3.8) to escape local minima.</li>
+        <li>Principled $\lambda$ schedules instead of the sign-change heuristic.</li>
+        <li>Predictor models for when splitting beats LNLS.</li>
+        <li>Test on newer topologies (Zephyr) and gate-based annealers.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Conclusions</h3>
+      <ul>
+        <li>First splitting + linearisation for discrete QUBO on hardware-restricted annealers.</li>
+        <li>No NP-hard preprocessing; scales beyond what embedding can fit.</li>
+        <li>Weak monotonicity proven for $\lambda \ge \|2 A_L\|$.</li>
+        <li>Validated on D-Wave Advantage for $\pm 1$ weights.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="keypt" style="margin-top: 12px; text-align: center;">
+    <strong>Bottom line.</strong> Splitting trades the (already non-existent) global optimum of minor embedding for the ability to scale beyond what current hardware can embed, with zero NP-hard preprocessing and a proven convergence guarantee.
+    <div class="small" style="margin-top: 4px;">Source code: github.com/MSeelbach/SplittingForQA &nbsp;·&nbsp; arXiv:2507.12536v1</div>
+  </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 13: THANKS ============ -->
+<section class="slide title-slide">
+  <div class="papertitle" style="font-size:48px;">Thanks for listening<span style="letter-spacing:6px;">...</span></div>
+  <div class="seminar" style="margin-top:40px;">
+    CENG 591 Graduate Seminar
+    <div class="student">Denizcan Yılmaz &nbsp;·&nbsp; 2444172</div>
+  </div>
+</section>
+
+<div class="footer" id="footer">
+  <span>Compensating Connectivity Restrictions in Quantum Annealers, Seelbach Benkner et&nbsp;al. (2025)</span>
+  <span class="pageno"><span id="cur">1</span> / <span id="tot">13</span></span>
+</div>
+
+</div><!-- /stage -->
+
+<div class="nav-hint">← / → or Space to navigate &nbsp;·&nbsp; F = fullscreen &nbsp;·&nbsp; Cmd/Ctrl-P to print</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  document.getElementById('tot').textContent = total;
+  let idx = 0;
+
+  const DESIGN_W = 1200;
+  const DESIGN_H = 675;
+
+  function fit() {
+    const margin = 40;
+    const sw = (window.innerWidth  - margin*2) / DESIGN_W;
+    const sh = (window.innerHeight - margin*2) / DESIGN_H;
+    const scale = Math.min(sw, sh, 1.4);
+    slides.forEach(s => { s.style.transform = `scale(${scale})`; });
+  }
+
+  function show(i) {
+    idx = Math.max(0, Math.min(total - 1, i));
+    slides.forEach((s, k) => s.classList.toggle('active', k === idx));
+    document.getElementById('cur').textContent = idx + 1;
+    if (window.MathJax && window.MathJax.typesetPromise) {
+      window.MathJax.typesetPromise([slides[idx]]);
+    }
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { show(idx + 1); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { show(idx - 1); e.preventDefault(); }
+    else if (e.key === 'Home') { show(0); }
+    else if (e.key === 'End') { show(total - 1); }
+    else if (e.key === 'f' || e.key === 'F') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+
+  document.getElementById('stage').addEventListener('click', (e) => {
+    const w = window.innerWidth;
+    if (e.clientX < w / 2) show(idx - 1); else show(idx + 1);
+  });
+
+  window.addEventListener('resize', fit);
+  fit();
+  show(0);
+</script>
+</body>
+</html>

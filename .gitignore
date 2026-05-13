@@ -1,0 +1,24 @@
+# LaTeX intermediates
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.fls
+*.fdb_latexmk
+
+# macOS
+.DS_Store
+
+# Reference materials not redistributed in this repo
+2507.12536v1.pdf
+quantum_annealing_guide_v*.pdf
+
+# Earlier presentation drafts
+*.pptx
+
+# Keep only the cleaned figures actually used by the slides
+figs/*
+!figs/fig1_clean-11.png
+!figs/fig6_clean-17.png
+!figs/fig10_clean-21.png

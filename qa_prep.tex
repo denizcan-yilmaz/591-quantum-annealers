@@ -1,0 +1,227 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=2.4cm,top=2.2cm,bottom=2.4cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{parskip}
+\usepackage{hyperref}
+
+\definecolor{accent}{HTML}{7A1F1F}
+\definecolor{muted}{HTML}{5B5B5B}
+\definecolor{soft}{HTML}{EFECE2}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=accent,
+  urlcolor=accent,
+  citecolor=accent
+}
+
+\titleformat{\section}
+  {\normalfont\large\bfseries\color{accent}}
+  {\thesection.}{0.6em}{}
+\titlespacing*{\section}{0pt}{1.2em}{0.4em}
+
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\color{muted!40}\hrule width\headwidth height\headrulewidth}
+\fancyhead[L]{\small\itshape\color{muted}Q\&A Prep \textendash{} Quantum Annealing Seminar}
+\fancyhead[R]{\small\itshape\color{muted}\thepage}
+
+\setlength{\parskip}{0.4em}
+\setlength{\parindent}{0pt}
+
+% Q & A formatting
+\newcounter{qanda}
+\newcommand{\qa}[2]{%
+  \stepcounter{qanda}%
+  \par\noindent
+  \textbf{\color{accent}Q\arabic{qanda}.}\;#1\par\smallskip
+  \hangindent=1.6em\hangafter=0
+  \textbf{A.}\;\textit{#2}\par\medskip
+}
+
+\begin{document}
+
+% ===== Title page =====
+\begin{center}
+\vspace*{1.2cm}
+{\LARGE\bfseries\color{accent} Q\&A Preparation}\\[0.4em]
+{\large\itshape Likely audience questions and short answers}\\[1.6em]
+{\large\bfseries Compensating Connectivity Restrictions in Quantum Annealers}\\
+{\large\bfseries via Splitting and Linearisation Techniques}\\[0.4em]
+{\normalsize Seelbach Benkner, L\"ahner, Golyanik, Kliesch, Moeller \quad arXiv:2507.12536v1 (2025)}\\[1.4em]
+\rule{0.5\linewidth}{0.4pt}\\[0.6em]
+{\normalsize CENG 591 Graduate Seminar}\\
+{\normalsize Denizcan Y\i lmaz \quad 2444172}\\[1.4em]
+\begin{minipage}{0.85\linewidth}
+\small\itshape\color{muted}
+Thirty short questions a graduate audience might ask after the talk, with concise answers at the level of the speaker notes. The answers stay within what was actually said or shown; for anything beyond that, the safest reply is to acknowledge the limit of the talk and gesture at the paper. Read this once before the session to internalise the wording.
+\end{minipage}
+\end{center}
+
+\vspace*{\fill}
+
+\newpage
+
+% =========================================================
+\section*{A.\quad Background and motivation}
+% =========================================================
+
+\qa{What does QUBO stand for and why is it useful?}{Quadratic Unconstrained Binary Optimisation. It is a standard way to write many combinatorial problems as minimising $x^\top Q x$ over binary variables, and quantum annealers solve exactly this form natively.}
+
+\qa{What is the difference between QUBO and the Ising model?}{They are mathematically equivalent. QUBO uses binary variables in $\{0,1\}$ and Ising uses spins in $\{-1,+1\}$. The conversion is just $s = 2x - 1$. Quantum hardware works with spins, so the paper writes everything in the Ising form.}
+
+\qa{What is the connectivity restriction in physical terms?}{Each qubit can only interact with a small fixed set of physical neighbours, set by the chip wiring. If the problem needs a coupling that the hardware does not wire, it cannot be encoded directly.}
+
+\qa{Why does a 5{,}000-qubit chip only fit dense problems with around 150 variables?}{A dense problem needs an interaction between every pair of variables. To make those interactions, the standard fix glues many physical qubits into a chain per logical variable, and the chain overhead burns through the 5{,}000-qubit budget very quickly.}
+
+\qa{What kinds of problems does this paper target?}{Combinatorial optimisation problems that can be written as a QUBO: scheduling, vehicle routing, circuit layout, graph cuts, and similar NP-hard tasks where classical solvers struggle at scale.}
+
+% =========================================================
+\section*{B.\quad Minor embedding}
+% =========================================================
+
+\qa{What is minor embedding in plain terms?}{It is the process of mapping a problem graph onto the hardware graph by representing each logical variable as a chain of several physical qubits, with a strong penalty term that forces the chain to agree.}
+
+\qa{Why is finding a minor embedding hard?}{It is an NP-hard graph problem in general, with no efficient algorithm known. The standard heuristics still take minutes per instance, and they often fail entirely for large or dense problem graphs.}
+
+\qa{When would you still prefer minor embedding over splitting?}{For small instances where the embedding fits and you can afford the preprocessing time, embedding tends to give a more accurate solution because it does not introduce any approximation.}
+
+% =========================================================
+\section*{C.\quad The splitting idea}
+% =========================================================
+
+\qa{Why split $A$ based on the hardware graph specifically?}{Because some interactions in $A$ already have a physical wire on the chip and can be handled exactly. The others need to be approximated. The split $A = A_Q + A_L$ isolates the exact part from the approximated part.}
+
+\qa{What goes into $A_Q$ and what goes into $A_L$?}{$A_Q$ holds the edges already on the hardware, where the adjacency matrix $M$ has a one. $A_L$ holds the remaining edges, which the hardware cannot wire and therefore have to be approximated.}
+
+\qa{Why does the linearisation result in a per-qubit bias?}{Because a first-order Taylor expansion turns the quadratic $s^\top A_L s$ into something linear in $s$, that is, a fixed bias per qubit. A linear term only acts on individual qubits, not pairs, so the hardware can apply it directly without any new coupling wires.}
+
+\qa{What does the damping term do?}{It penalises jumps where the Taylor approximation would break down. On the discrete cube $\{-1,+1\}^n$, the squared-norm penalty itself reduces to a per-qubit bias, so it also fits the hardware directly.}
+
+\qa{Why apply a random permutation each iteration?}{Without it, the same edges always get linearised, so the approximation error builds up systematically in the same places. Permuting reshuffles which edges land on hardware, so over many iterations every edge gets the exact treatment some of the time.}
+
+% =========================================================
+\section*{D.\quad Algorithm and parameters}
+% =========================================================
+
+\qa{What controls the value of $\lambda$?}{Theoretically, weak monotonicity is guaranteed whenever $\lambda \ge \|2 A_L\|$, the spectral norm. In practice the paper also tries smaller values to allow occasional uphill moves and escape local minima.}
+
+\qa{What is the ``force vector'' you mentioned?}{It is a vector whose sign at each entry tells you whether the corresponding variable would flip at the next iteration. Only sign changes matter, which is why only certain $\lambda$ values produce different outcomes.}
+
+\qa{How many $\lambda$ values does the algorithm actually test?}{The default is fifteen candidates per iteration, taken from the midpoints between sorted entries of the force vector. The lowest-energy iterate among them is kept.}
+
+\qa{How is the algorithm initialised?}{With a random assignment of $\pm 1$ to all variables. There is no warm start from another method.}
+
+% =========================================================
+\section*{E.\quad Theory and proof}
+% =========================================================
+
+\qa{What does weak monotonicity actually guarantee?}{Only that the true energy never increases from one iteration to the next. It does not guarantee reaching the global minimum.}
+
+\qa{What is the surrogate function in the proof?}{It is $E^{(k)}(x)$: the energy with $A_L$ linearised at $s^{(k)}$ plus the damping term. By the Taylor remainder theorem, for $\lambda$ large enough it is a safe upper bound on the true energy at every point.}
+
+\qa{Why does convergence in finitely many steps follow from monotonicity?}{Because there are only $2^n$ possible binary vectors, and the energy is non-increasing. We can only descend so many times before we run out of distinct states.}
+
+\qa{What is the relationship to proximal gradient descent?}{The iteration is mathematically equivalent to the proximal gradient descent algorithm applied to a composite problem $\min f(s) + g(s)$, where $f$ is the linearised part and $g$ is the hardware-friendly part plus the discrete $\pm 1$ constraint.}
+
+% =========================================================
+\section*{F.\quad Comparison to LNLS and other methods}
+% =========================================================
+
+\qa{How does splitting compare to LNLS?}{LNLS, the Large Neighbourhood Local Search competitor, fixes most variables and optimises the rest exactly. Splitting linearises the rest instead. Empirically they are comparable, with splitting matching LNLS at sub-problem size around thirty.}
+
+\qa{When does splitting beat LNLS?}{Mostly on dense or fully-connected graphs, where the global linearisation captures structure that small fixed neighbourhoods cannot. On very sparse graphs, specialised heuristics that exploit the sparsity often outperform splitting.}
+
+\qa{Is there a clear rule for when splitting is the right choice?}{The paper is honest that no reliable predictor was found. The recommendation is essentially to try it, especially on dense problems too large for minor embedding.}
+
+% =========================================================
+\section*{G.\quad Experiments and figures}
+% =========================================================
+
+\qa{What datasets were used in the experiments?}{Two: a regular spin-glass dataset of 270 instances with sizes from ten upward, and 909 MQLib Max-Cut instances with 500 to 1{,}000 variables.}
+
+\qa{What does ``energy divided by best heuristic'' mean on the y-axis?}{It is a normalised approximation ratio: the obtained energy divided by the best energy a reference heuristic could find. Higher means better, with 1.0 corresponding to matching the best known solution.}
+
+\qa{What was the wall-clock advantage over minor embedding?}{Roughly two orders of magnitude on the spin-glass instances. Minor embedding alone takes up to ten minutes of preprocessing, while splitting and LNLS finish in well under a second.}
+
+% =========================================================
+\section*{H.\quad Limitations and extensions}
+% =========================================================
+
+\qa{Why does the method fail on float-valued or wide-range integer weights?}{D-Wave's coupling strengths have limited numerical precision. Very large or very fine-grained weights cannot be represented faithfully, so the energy landscape the chip sees is distorted.}
+
+\qa{Could this idea generalise to gate-based quantum computers?}{The splitting framework itself is generic, but the implementation here relies on a hardware-restricted QUBO solver. Adapting it to a gate-based device would require a different sub-solver, and the paper does not test this.}
+
+\qa{What is the simulated-annealing extension that is mentioned?}{A sketch in Section 3.8 adds a temperature-dependent stochastic term so the algorithm can take occasional uphill moves and escape local minima. It is theoretically motivated but the paper leaves a full numerical evaluation to future work.}
+
+% =========================================================
+\section*{I.\quad Symbol \& variable glossary}
+% =========================================================
+
+\noindent\textit{Quick reference for the symbols that appear in the slides and equations. Use this if asked ``what does $X$ stand for?'' during questions.}
+
+\subsection*{\small\color{accent} Problem variables}
+\begin{tabular}{@{}p{2.4cm}p{14cm}@{}}
+$n$            & Number of variables in the optimisation problem. \\
+$x$            & Binary variable vector in $\{0,1\}^n$ (QUBO form). \\
+$s$            & Spin variable vector in $\{-1,+1\}^n$ (Ising form). Related to $x$ by $s = 2x - 1$. \\
+$\hat{x}, \hat{s}$ & The optimal (cost-minimising) assignment we are trying to find. \\
+\end{tabular}
+
+\subsection*{\small\color{accent} Coupling matrices and biases}
+\begin{tabular}{@{}p{2.4cm}p{14cm}@{}}
+$Q$            & QUBO coupling matrix, $n \times n$. The entry $Q_{ij}$ encodes how variables $i$ and $j$ interact in the cost. \\
+$A$            & Ising pairwise coupling matrix, $n \times n$. Related to $Q$ by $A = Q/4$. \\
+$b$            & Ising external bias (field) vector, $b = Q \mathbf{1} / 2$, where $\mathbf{1}$ is the all-ones vector. \\
+$A_Q$          & The ``quadratic'' part of $A$: only entries where the hardware has a physical wire. Handled exactly by the annealer. \\
+$A_L$          & The ``linearised'' part of $A$: the remaining entries that the hardware cannot wire. Approximated by linearisation. \\
+\end{tabular}
+
+\subsection*{\small\color{accent} Hardware and operations}
+\begin{tabular}{@{}p{2.4cm}p{14cm}@{}}
+$M$            & Hardware adjacency matrix. $M_{ij}=1$ if there is a physical wire between qubits $i$ and $j$, otherwise $0$. \\
+$P_k$          & Random permutation matrix drawn fresh at iteration $k$. Reshuffles the mapping of problem variables to physical qubits. \\
+$P_k^{\top}$   & The transpose (= inverse, since $P_k$ is a permutation) of the permutation matrix. \\
+$\odot$        & The Hadamard product, that is, element-wise multiplication of two matrices of the same shape. \\
+\end{tabular}
+
+\subsection*{\small\color{accent} Iteration and algorithm}
+\begin{tabular}{@{}p{2.4cm}p{14cm}@{}}
+$s^{(k)}$      & The current iterate (the spin vector after iteration $k$). \\
+$s^{(k+1)}$    & The next iterate, produced by solving the hardware-friendly subproblem. \\
+$\lambda$      & Damping (regularisation) strength. Larger $\lambda$ = smaller, safer steps. Monotonicity is guaranteed when $\lambda \ge \|2 A_L\|$. \\
+$\|\cdot\|$    & Spectral norm of a matrix (the largest singular value, equivalent to the largest absolute eigenvalue for symmetric matrices). \\
+$L$            & Linear force vector used to select $\lambda$ candidates. Each entry's sign tells whether the corresponding variable would flip next step. \\
+\end{tabular}
+
+\subsection*{\small\color{accent} Energy and proof}
+\begin{tabular}{@{}p{2.4cm}p{14cm}@{}}
+$E(s)$         & The true energy at spin assignment $s$, equal to $s^{\top} A s + s^{\top} b$. We want to minimise this. \\
+$E^{(k)}(x)$   & The surrogate energy at iteration $k$: the true energy with $A_L$ replaced by its linearisation, plus the damping term. \\
+$f(s)$         & In the proximal gradient view: the smooth part, $f(s) = s^{\top} A_L s$. Linearised in the iteration. \\
+$g(s)$         & In the proximal gradient view: the non-smooth part, $g(s) = s^{\top} A_Q s + \mathbb{I}_{\{-1,+1\}^n}(s)$. Solved exactly by the hardware. \\
+$\mathbb{I}_{\{-1,+1\}^n}$ & The indicator function of the discrete cube: $0$ if $s \in \{-1,+1\}^n$, $+\infty$ otherwise. Encodes the binary constraint. \\
+$\blacksquare$ & Standard end-of-proof marker. \\
+\end{tabular}
+
+\vspace{2em}
+\hrule height 0.4pt
+\vspace{0.4em}
+\begin{center}
+\small\itshape\color{muted}
+End of Q\&A preparation. If a question goes deeper than the talk, it is fine to say
+``the paper does not go into that in detail'' rather than guess.
+\end{center}
+
+\end{document}
