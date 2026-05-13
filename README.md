@@ -20,9 +20,6 @@ Navigation: `→` / `←` or `Space` to step through slides, `F` for fullscreen,
 | `index.html` | The 13-slide deck (12 content slides + thanks). |
 | `quantum_annealing_seminar.html` | Same content as `index.html`; kept for reference. |
 | `figs/` | Figures from the paper (Fig. 1, Fig. 6, Fig. 10). |
-| `speaker_notes.pdf` | Ten-minute speaking script, one section per slide. |
-| `qa_prep.pdf` | Thirty likely audience questions with short answers, plus a symbol glossary. |
-| `speaker_notes.tex`, `qa_prep.tex` | LaTeX sources for the two PDFs. |
 
 ## Local viewing
 

@@ -17,6 +17,12 @@ quantum_annealing_guide_v*.pdf
 # Earlier presentation drafts
 *.pptx
 
+# Private speaker materials (kept locally, not published)
+speaker_notes.pdf
+speaker_notes.tex
+qa_prep.pdf
+qa_prep.tex
+
 # Keep only the cleaned figures actually used by the slides
 figs/*
 !figs/fig1_clean-11.png
